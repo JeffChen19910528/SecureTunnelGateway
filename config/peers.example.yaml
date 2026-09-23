@@ -1,0 +1,37 @@
+# SecureTunnel Gateway - Peer 設定範例（歷史 Phase 1 草稿 - 已被 JSON 格式取代）
+#
+# ⚠️ 本檔案是 Phase 1 的初始設計草稿，保留作為歷史參考。
+# Phase 3 實際實作改採 JSON 格式的 Peer Registry（peerStorePath，預設
+# /etc/securetunnel-gateway/peers.json），理由見 docs/configuration-guide.md 第二節。
+# 實際格式請參考 config/peers.example.json，不要依照本檔案的 YAML 結構操作真實系統。
+#
+# 這是 EXAMPLE 檔案。真實 Peer 清單中只會出現 Client 的「公鑰」，
+# 絕對不會出現 Client 私鑰。私鑰由 Client 端自行產生與保管。
+#
+# publicKey 下方的值為範例格式（44 字元、base64、以 = 結尾），
+# 並非真實可用的金鑰，僅用來展示欄位格式。
+
+peers:
+  - id: "peer-lab-windows-01"
+    displayName: "Lab Windows Test Client"
+    publicKey: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    assignedVpnIp: "10.250.0.10"
+    allowedIps:
+      - "10.250.0.10/32"
+    status: "enabled"             # enabled | disabled
+    createdAt: "2026-09-23T00:00:00Z"
+    updatedAt: "2026-09-23T00:00:00Z"
+    expiresAt: null               # 選填，ISO 8601，null 表示不過期
+    description: "Bootstrap/Lab 用測試 Peer，僅供開發環境驗證流程使用"
+
+  - id: "peer-lab-linux-01"
+    displayName: "Lab Linux Test Client"
+    publicKey: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB="
+    assignedVpnIp: "10.250.0.11"
+    allowedIps:
+      - "10.250.0.11/32"
+    status: "disabled"            # 範例：展示已撤銷/停用狀態的 Peer
+    createdAt: "2026-09-23T00:00:00Z"
+    updatedAt: "2026-09-23T00:00:00Z"
+    expiresAt: "2026-12-31T00:00:00Z"
+    description: "範例：已停用 Peer，用於驗證撤銷後無法存取的邏輯"

@@ -1,0 +1,89 @@
+[Unit]
+Description=SecureTunnel Gateway Agent
+# See the repository's README.md and docs/ for full documentation - intentionally not
+# listed here as a Documentation= URL since this project has no published URL yet (see
+# CONTRIBUTING.md); fill one in once the repository has a real, reachable location.
+# Needs a working network stack (for the WireGuard UDP listener and outbound
+# connectivity to protected resources), but is not itself a network-online
+# blocking dependency for other units - see docs/installation-guide.md.
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60s
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/securetunnel-gateway/SecureTunnel.GatewayAgent gateway serve --config /etc/securetunnel-gateway/gateway.yaml
+# ^ Phase 6A: real, persistent execution mode (Daemon/GatewayDaemonService.cs) - no longer
+# the Phase 6 placeholder. On start it loads and validates configuration, runs Phase 5
+# crash-recovery detection, and evaluates Desired/Active/Effective state; it then enters a
+# run loop that re-evaluates on a fixed interval (--interval-seconds, default 60) and logs
+# to journald (see StandardOutput/StandardError below). It NEVER calls `config apply`
+# itself (Option A - see the class doc comment); an operator or a separate, explicit
+# automation must apply a changed Desired configuration. SIGTERM (what `systemctl stop`
+# sends) and SIGINT are both handled for graceful shutdown. Type=simple is correct here:
+# systemd only needs the process to keep running, not to signal readiness via sd_notify.
+
+# --- Identity: root by default (see docs/security-model.md "Least Privilege") ---
+# wg-quick, nft, and writing to /etc/wireguard all require root or an equivalent set
+# of Linux capabilities. This project has NOT verified that CAP_NET_ADMIN alone (without
+# full root) is sufficient for every code path (wg-quick internally shells out to `ip`,
+# `iptables`/`nft`, and `resolvconf` depending on config, each with their own privilege
+# needs) - running as a dedicated non-root user with only CAP_NET_ADMIN is a documented,
+# NOT-YET-VERIFIED hardening option; see the commented-out block below.
+User=root
+Group=root
+
+# --- Hardening that IS compatible with running as root ---
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelModules=false
+# ^ wg-quick may need to `modprobe wireguard` on first start if the module isn't already
+# loaded - if your kernel already has WireGuard built in or the module pre-loaded, you
+# can safely set this to true.
+ProtectKernelTunables=false
+# ^ enable-ip-forwarding.sh's sysctl writes go through /etc/sysctl.d, not through this
+# service, so this is set false only to avoid surprises; re-evaluate if that changes.
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+# Explicit read-write access to exactly the directories this Gateway Agent writes to -
+# everything else under ProtectSystem=strict is read-only.
+ReadWritePaths=/etc/securetunnel-gateway /etc/wireguard /var/lib/securetunnel-gateway /var/log/securetunnel-gateway
+
+# --- Restart policy ---
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=30s
+TimeoutStopSec=15s
+
+# --- Logging: delegated to journald, not a custom file sink (see docs/operations-guide.md "Logging") ---
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=securetunnel-gateway
+
+[Install]
+WantedBy=multi-user.target
+
+# ---------------------------------------------------------------------------
+# NOT-YET-VERIFIED least-privilege alternative (documented, not enabled by default):
+#
+# User=securetunnel-gateway
+# Group=securetunnel-gateway
+# AmbientCapabilities=CAP_NET_ADMIN
+# CapabilityBoundingSet=CAP_NET_ADMIN
+#
+# This has NOT been tested against a real wg-quick/nft invocation in this project (the
+# development environment has neither wireguard-tools nor nftables installed - see
+# docs/troubleshooting.md). Before relying on this in production, verify on a real
+# Ubuntu Server that:
+#   1. `wg-quick up` succeeds as this unprivileged user with only CAP_NET_ADMIN.
+#   2. `nft -f` succeeds the same way.
+#   3. Reading/writing files under ReadWritePaths above works with this user's ownership.
+# If any of those fail, either grant the missing capability explicitly (e.g. CAP_NET_RAW)
+# or fall back to User=root above - do not silently widen capabilities without updating
+# this comment to say what was verified.
+# ---------------------------------------------------------------------------

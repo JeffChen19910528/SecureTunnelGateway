@@ -1,0 +1,83 @@
+# SecureTunnel Gateway - .gitignore
+# 目標：絕不讓私鑰、真實設定、憑證或建置產物進入版本控制。
+
+# --- Secrets / Keys (最重要) ---
+*.key
+*.pem
+*.p12
+*.pfx
+server.key
+server-private.key
+**/keys/
+**/secrets/
+.env
+*.env
+!.env.example
+
+# --- 真實設定檔（只保留 .example 範例） ---
+config/gateway.yaml
+config/peers.yaml
+config/peers.json
+config/protected-resources.yaml
+
+# --- Peer Registry (real runtime data, contains real Client public keys) ---
+*.peers.json
+peers.json
+!config/peers.example.json
+
+# --- Resource / Policy Registry (real runtime data) ---
+config/resources.json
+config/policies.json
+resources.json
+policies.json
+!config/resources.example.json
+!config/policies.example.json
+
+# --- Generated firewall rulesets (real runtime data / working files) ---
+*.conf.candidate
+*.conf.lastknowngood
+securetunnel.conf
+
+# --- Generated Client configuration templates (never commit even though they're
+#     placeholders - operators may paste a real private key into the copy on disk) ---
+*.client.conf
+
+# --- WireGuard 真實設定（只保留 deploy/wireguard/*.conf.example） ---
+deploy/wireguard/*.conf
+!deploy/wireguard/*.conf.example
+
+# --- Logs / Audit ---
+*.log
+logs/
+
+# --- Backups ---
+*.tar.gz
+*backup*.tar.gz
+
+# --- .NET build artifacts ---
+bin/
+obj/
+publish/
+*.user
+*.suo
+
+# --- Test / coverage artifacts ---
+TestResults/
+*.trx
+coverage/
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+.vs/
+.vscode/
+.idea/
+
+# --- Docker / test-lab local overrides ---
+docker-compose.override.yml
+test-lab/**/*.local.yml
+
+# --- Claude Code local files (session recovery points, project instructions) ---
+.claude_recovery/
+CLAUDE.md
+.claude/

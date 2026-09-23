@@ -1,0 +1,38 @@
+[
+  {
+    "resourceId": "resource-a1b2c3d4e5f6",
+    "name": "Lab Website",
+    "description": "範例受保護網站（Test Lab，非正式企業服務）",
+    "destination": "10.20.0.10",
+    "protocol": "Tcp",
+    "port": 443,
+    "portEnd": null,
+    "enabled": true,
+    "createdAtUtc": "2026-09-23T00:00:00Z",
+    "updatedAtUtc": "2026-09-23T00:00:00Z"
+  },
+  {
+    "resourceId": "resource-b2c3d4e5f6a1",
+    "name": "Lab API",
+    "description": "範例受保護 API（Test Lab，非正式企業服務）",
+    "destination": "10.20.0.20",
+    "protocol": "Tcp",
+    "port": 8443,
+    "portEnd": null,
+    "enabled": true,
+    "createdAtUtc": "2026-09-23T00:00:00Z",
+    "updatedAtUtc": "2026-09-23T00:00:00Z"
+  },
+  {
+    "resourceId": "resource-c3d4e5f6a1b2",
+    "name": "Lab TCP Service",
+    "description": "範例受保護 TCP 服務，如 PostgreSQL（Test Lab，非正式企業服務）",
+    "destination": "10.20.0.30",
+    "protocol": "Tcp",
+    "port": 5432,
+    "portEnd": null,
+    "enabled": true,
+    "createdAtUtc": "2026-09-23T00:00:00Z",
+    "updatedAtUtc": "2026-09-23T00:00:00Z"
+  }
+]

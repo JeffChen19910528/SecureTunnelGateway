@@ -1,0 +1,36 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SecureTunnel.GatewayAgent/SecureTunnel.GatewayAgent.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/ConfigurationTests/">
+    <Project Path="tests/ConfigurationTests/SecureTunnel.GatewayAgent.ConfigurationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/DaemonTests/">
+    <Project Path="tests/DaemonTests/SecureTunnel.GatewayAgent.DaemonTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/DeploymentTests/">
+    <Project Path="tests/DeploymentTests/SecureTunnel.GatewayAgent.DeploymentTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/FirewallTests/">
+    <Project Path="tests/FirewallTests/SecureTunnel.GatewayAgent.FirewallTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/IntegrationTests/">
+    <Project Path="tests/IntegrationTests/SecureTunnel.GatewayAgent.IntegrationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/LifecycleTests/">
+    <Project Path="tests/LifecycleTests/SecureTunnel.GatewayAgent.LifecycleTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/PeerTests/">
+    <Project Path="tests/PeerTests/SecureTunnel.GatewayAgent.PeerTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/TestSupport/">
+    <Project Path="tests/TestSupport/SecureTunnel.GatewayAgent.TestSupport.csproj" />
+  </Folder>
+  <Folder Name="/tests/ValidationTests/">
+    <Project Path="tests/ValidationTests/SecureTunnel.GatewayAgent.ValidationTests.csproj" />
+  </Folder>
+  <Folder Name="/tests/WireGuardTests/">
+    <Project Path="tests/WireGuardTests/SecureTunnel.GatewayAgent.WireGuardTests.csproj" />
+  </Folder>
+</Solution>

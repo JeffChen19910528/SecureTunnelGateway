@@ -1,0 +1,61 @@
+# SecureTunnel Gateway - 主要設定檔範例 (Phase 2 schema)
+#
+# 這是 EXAMPLE 檔案，不含任何真實金鑰或正式環境資訊。
+# 正式部署時，複製本檔為 gateway.yaml，並依 docs/configuration-guide.md 填入實際值。
+# 絕對不要把私鑰內容本身提交到 Git；privateKeyPath 只是路徑參考。
+#
+# Schema 說明：本檔案為 Phase 2（WireGuard Bootstrap）依 GatewayConfiguration 模型
+# 重新整理過的版本，欄位分組（wireGuard / network / routing / security）對應
+# src/SecureTunnel.GatewayAgent/Models/ 底下的 C# 設定模型。網路規劃數值與 Phase 1
+# docs/network-topology.md 完全一致，僅欄位分組方式調整。
+
+gatewayId: "gw-lab-001"
+gatewayName: "SecureTunnel Lab Gateway"
+operatingSystem: "ubuntu-24.04"
+
+wireGuard:
+  interfaceName: "wg-securetunnel"
+  listenPort: 51820
+  address: "10.250.0.1/24"
+  privateKeyPath: "/etc/securetunnel-gateway/keys/server.key"   # 檔案需 0600，擁有者為服務帳號
+  publicKeyPath: "/etc/securetunnel-gateway/keys/server.pub"
+  saveConfig: false
+
+network:
+  vpnCidr: "10.250.0.0/24"
+  gatewayVpnAddress: "10.250.0.1"
+  clientAddressPoolStart: "10.250.0.10"
+  clientAddressPoolEnd: "10.250.0.200"
+  lanInterface: "eth0"          # Gateway 面向受保護網路的介面
+  protectedNetworks:
+    - name: "lab-protected-net"
+      cidr: "10.20.0.0/24"
+
+routing:
+  mode: "nat"                   # 目前僅支援 "nat"；"routed" 會被驗證拒絕（尚未支援）
+  enableIpv4Forwarding: true
+  enableIpv6Forwarding: false
+  ipv6PolicyAcknowledged: false # 必須明確設為 true 才能搭配 enableIpv6Forwarding: true
+  natEnabled: true
+
+security:
+  firewallDefaultPolicy: "deny" # 固定為 deny，驗證階段拒絕任何其他值
+  allowUnlistedResources: false # 固定為 false，驗證階段拒絕 true（禁止 allow-all）
+  requirePeerValidation: true
+  failClosed: true              # 固定為 true，驗證階段拒絕 false
+
+logging:
+  level: "Information"
+  auditLogPath: "/var/log/securetunnel-gateway/audit.log"
+  applicationLogPath: "/var/log/securetunnel-gateway/gateway.log"
+
+healthCheck:
+  intervalSeconds: 30
+  diskSpaceWarningPercent: 85
+  timeSyncWarningSeconds: 10
+
+# 未來 Control Plane 整合預留欄位（本階段不會被使用，僅保留 schema 位置）
+controlPlane:
+  enabled: false
+  endpoint: ""
+  credentialReference: ""

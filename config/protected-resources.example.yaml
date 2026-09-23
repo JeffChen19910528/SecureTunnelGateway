@@ -1,0 +1,44 @@
+# SecureTunnel Gateway - 受保護資源設定範例（歷史 Phase 1 草稿 - 已被 JSON 格式取代）
+#
+# ⚠️ 本檔案是 Phase 1 的初始設計草稿，保留作為歷史參考。
+# Phase 4 實際實作改採兩份獨立的 JSON Registry：
+#   - resourceStorePath（預設 /etc/securetunnel-gateway/resources.json）
+#   - policyStorePath（預設 /etc/securetunnel-gateway/policies.json）
+# 理由見 docs/configuration-guide.md 第三節。
+# 實際格式請參考 config/resources.example.json 與 config/policies.example.json，
+# 不要依照本檔案的 YAML 結構（含 allowedPeers/allowedVpnIps/priority 等已不存在的欄位）操作真實系統。
+#
+# 這是 EXAMPLE 檔案。以下 IP 皆為範例值，正式環境請依實際內部網路調整，
+# 並確保與 gateway.yaml 中的 protectedNetworks 一致，通過網段重疊檢查。
+
+resources:
+  - name: "lab-website"
+    destination: "10.20.0.10"
+    port: 443
+    protocol: "tcp"
+    allowedPeers:
+      - "peer-lab-windows-01"
+      - "peer-lab-linux-01"
+    enabled: true
+    priority: 100
+    description: "範例受保護網站（Test Lab，非正式企業服務）"
+
+  - name: "lab-api"
+    destination: "10.20.0.20"
+    port: 8443
+    protocol: "tcp"
+    allowedPeers:
+      - "peer-lab-windows-01"
+    enabled: true
+    priority: 200
+    description: "範例受保護 API（Test Lab，非正式企業服務）"
+
+  - name: "lab-tcp-service"
+    destination: "10.20.0.30"
+    port: 5432
+    protocol: "tcp"
+    allowedVpnIps:
+      - "10.250.0.10/32"
+    enabled: true
+    priority: 300
+    description: "範例受保護 TCP 服務，如 PostgreSQL（Test Lab，非正式企業服務）"
