@@ -81,3 +81,8 @@ test-lab/**/*.local.yml
 .claude_recovery/
 CLAUDE.md
 .claude/
+
+# --- Internal dev/security docs kept local only, not published to GitHub ---
+SECURITY.md
+CONTRIBUTING.md
+docs/
