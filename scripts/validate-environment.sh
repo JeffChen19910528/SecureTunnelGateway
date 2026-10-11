@@ -86,7 +86,7 @@ fi
 # ---------------------------------------------------------------------------
 KERNEL_VERSION="$(uname -r || echo unknown)"
 if [[ "$KERNEL_VERSION" == *"microsoft"* ]]; then
-  add_result "kernel.version" "WARN" "Kernel is '${KERNEL_VERSION}' (WSL2). This is a development/logic-validation environment, not a production Linux Server. See docs/troubleshooting.md."
+  add_result "kernel.version" "WARN" "Kernel is '${KERNEL_VERSION}' (WSL2). This is a development/logic-validation environment, not a production Linux Server."
 else
   add_result "kernel.version" "PASS" "Kernel: ${KERNEL_VERSION}"
 fi
@@ -265,7 +265,7 @@ if have_cmd docker; then
     add_result "docker.available" "WARN" "Docker CLI found but daemon not reachable. Docker is only used for test-lab protected services, not for WireGuard/nftables."
   fi
 else
-  add_result "docker.available" "WARN" "Docker not found. Not required for WireGuard/nftables; only needed for the optional test-lab (Phase 7)."
+  add_result "docker.available" "WARN" "Docker not found. Not required for WireGuard/nftables."
 fi
 
 # ---------------------------------------------------------------------------

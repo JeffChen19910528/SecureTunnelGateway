@@ -1,15 +1,15 @@
-# Real Linux Integration Test Lab (Phase 7)
+# Real Linux Integration Test Lab
 
 This directory holds an **executable, documented** integration test script for validating
 SecureTunnel Gateway against real `wireguard-tools`, `nftables`, and `systemd` on a real
-Ubuntu Server — the 15 checks listed in the Phase 7 spec ("Real Linux Integration
+Ubuntu Server — the 15 real-environment checks ("Real Linux Integration
 Validation").
 
 ## Honest status
 
 **This script has been written and reviewed in this session, but has NOT been executed
 here.** The development environment (WSL2 Ubuntu 24.04, no sudo, `wireguard-tools`/
-`nftables` not installed — see `docs/troubleshooting.md`) cannot run it. Do not treat its
+`nftables` not installed) cannot run it. Do not treat its
 existence as evidence any of its checks passed — it is prepared, not run. Run it on a real
 Ubuntu Server (22.04/24.04 LTS recommended) and read its PASS/FAIL/BLOCKED output for
 genuine results.
@@ -48,7 +48,7 @@ default** — pass `--with-packet-flow-test` to run it. Everything else runs by 
 
 ```bash
 # On a real Ubuntu Server, as root, with wireguard-tools + nftables installed,
-# and the Gateway Agent already published (see docs/installation-guide.md):
+# and the Gateway Agent already published:
 sudo GATEWAY_BIN=/usr/lib/securetunnel-gateway/SecureTunnel.GatewayAgent \
   ./run-integration-tests.sh [--with-packet-flow-test] [--keep-artifacts]
 ```

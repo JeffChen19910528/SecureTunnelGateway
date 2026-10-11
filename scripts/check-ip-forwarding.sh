@@ -43,7 +43,7 @@ elif [[ "$IPV4_STATUS" == "UNKNOWN" ]]; then
 fi
 
 ipv6_result="PASS"
-ipv6_msg="IPv6 forwarding is disabled (expected default; see docs/security-model.md 第十五節)"
+ipv6_msg="IPv6 forwarding is disabled (expected default)"
 if [[ "$IPV6_STATUS" == "1" ]]; then
   ipv6_result="WARN"
   ipv6_msg="IPv6 forwarding is ENABLED. SecureTunnel Gateway does not enable this by default; verify this is intentional."

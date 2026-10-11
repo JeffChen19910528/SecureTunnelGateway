@@ -1,13 +1,8 @@
-# SecureTunnel Gateway - 主要設定檔範例 (Phase 2 schema)
+# SecureTunnel Gateway - 主要設定檔範例
 #
 # 這是 EXAMPLE 檔案，不含任何真實金鑰或正式環境資訊。
-# 正式部署時，複製本檔為 gateway.yaml，並依 docs/configuration-guide.md 填入實際值。
+# 正式部署時，複製本檔為 gateway.yaml並填入實際值。
 # 絕對不要把私鑰內容本身提交到 Git；privateKeyPath 只是路徑參考。
-#
-# Schema 說明：本檔案為 Phase 2（WireGuard Bootstrap）依 GatewayConfiguration 模型
-# 重新整理過的版本，欄位分組（wireGuard / network / routing / security）對應
-# src/SecureTunnel.GatewayAgent/Models/ 底下的 C# 設定模型。網路規劃數值與 Phase 1
-# docs/network-topology.md 完全一致，僅欄位分組方式調整。
 
 gatewayId: "gw-lab-001"
 gatewayName: "SecureTunnel Lab Gateway"

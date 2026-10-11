@@ -103,7 +103,7 @@ fi
 
 echo ""
 echo "Installation complete. The service was installed but NOT enabled or started."
-echo "Remaining manual steps (see docs/installation-guide.md):"
+echo "Remaining manual steps:"
 echo "  1. sudo apt-get install -y wireguard-tools nftables   # if not already installed"
 echo "  2. Create ${CONFIG_DIR}/gateway.yaml (copy from config/gateway.example.yaml and edit)"
 echo "  3. sudo ${BIN_DIR}/SecureTunnel.GatewayAgent wireguard generate-keys --config ${CONFIG_DIR}/gateway.yaml --yes"

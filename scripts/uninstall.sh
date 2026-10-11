@@ -8,7 +8,7 @@
 #   /var/lib/securetunnel-gateway (config, peer/resource/policy registries, keys,
 #   configuration history, backups) and /var/log/securetunnel-gateway, because that
 #   data cannot be regenerated and deleting it silently would violate the project's
-#   "never silently delete recoverable state" rule (see docs/security-model.md).
+#   "never silently delete recoverable state" rule.
 #   Pass --purge-data to explicitly also remove that state - this is the ONLY way
 #   uninstall.sh will ever delete it, and it requires a separate, explicit --yes-i-am-sure
 #   confirmation flag as well, since it is irreversible (private keys, peer registry).
@@ -18,7 +18,7 @@
 # `nft flush ruleset` and never any other interface. This runs regardless of --purge-data
 # (it releases kernel/runtime state, not persisted data) and is always best-effort: a
 # missing `nft`/`wg-quick`, an already-down interface, or an already-absent table are not
-# errors (see docs/security-model.md "Uninstall Firewall Cleanup", Phase 7).
+# errors.
 #
 # Requires root.
 #

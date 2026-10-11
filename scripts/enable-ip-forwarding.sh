@@ -9,8 +9,7 @@
 #
 # Requires root. This script does NOT run automatically as part of any CLI
 # command - it must be invoked manually by an operator who has reviewed it.
-# It does not enable IPv6 forwarding (out of scope; see docs/security-model.md
-# 第十五節 IPv6 洩漏) and it does not touch nftables.
+# It does not enable IPv6 forwarding (out of scope) and it does not touch nftables.
 #
 # Usage:
 #   sudo ./scripts/enable-ip-forwarding.sh --dry-run   # show what would change

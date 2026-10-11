@@ -26,11 +26,11 @@ internal static class DiagnosticsCommands
 
             if (json)
             {
-                OutputFormat.PrintJson(new { version, phase = "Phase 2: WireGuard Bootstrap" });
+                OutputFormat.PrintJson(new { version, phase = "WireGuard Bootstrap" });
             }
             else
             {
-                Console.WriteLine($"SecureTunnel Gateway Agent {version} (Phase 2: WireGuard Bootstrap)");
+                Console.WriteLine($"SecureTunnel Gateway Agent {version}");
             }
 
             return ExitCodes.Success;

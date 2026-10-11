@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# SecureTunnel Gateway - Real Linux integration test lab (Phase 7).
+# SecureTunnel Gateway - Real Linux integration test lab.
 #
 # See README.md in this directory for full context, honest status, and the mapping from
-# each check here to the Phase 7 spec's 15-item list. THIS SCRIPT HAS NOT BEEN EXECUTED -
+# each check here to the 15-item real-environment list. THIS SCRIPT HAS NOT BEEN EXECUTED -
 # it is prepared for a real Ubuntu Server, not run in this project's WSL2 dev environment
 # (which lacks wireguard-tools/nftables/sudo). Read its output, don't assume it.
 #
@@ -62,7 +62,7 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 if [[ ! -x "$GATEWAY_BIN" ]]; then
-  echo "FATAL: GATEWAY_BIN '${GATEWAY_BIN}' not found or not executable. Publish it first (see docs/installation-guide.md)." >&2
+  echo "FATAL: GATEWAY_BIN '${GATEWAY_BIN}' not found or not executable. Publish it first." >&2
   exit 1
 fi
 for tool in wg wg-quick nft; do

@@ -1,11 +1,9 @@
 [Unit]
 Description=SecureTunnel Gateway Agent
-# See the repository's README.md and docs/ for full documentation - intentionally not
-# listed here as a Documentation= URL since this project has no published URL yet (see
-# CONTRIBUTING.md); fill one in once the repository has a real, reachable location.
+# See the repository README.md for documentation. Documentation= is intentionally omitted
 # Needs a working network stack (for the WireGuard UDP listener and outbound
 # connectivity to protected resources), but is not itself a network-online
-# blocking dependency for other units - see docs/installation-guide.md.
+# blocking dependency for other units.
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=60s
@@ -14,8 +12,8 @@ StartLimitBurst=5
 [Service]
 Type=simple
 ExecStart=/usr/lib/securetunnel-gateway/SecureTunnel.GatewayAgent gateway serve --config /etc/securetunnel-gateway/gateway.yaml
-# ^ Phase 6A: real, persistent execution mode (Daemon/GatewayDaemonService.cs) - no longer
-# the Phase 6 placeholder. On start it loads and validates configuration, runs Phase 5
+# ^ Real, persistent execution mode (Daemon/GatewayDaemonService.cs)
+# On start it loads and validates configuration, runs
 # crash-recovery detection, and evaluates Desired/Active/Effective state; it then enters a
 # run loop that re-evaluates on a fixed interval (--interval-seconds, default 60) and logs
 # to journald (see StandardOutput/StandardError below). It NEVER calls `config apply`
@@ -24,7 +22,7 @@ ExecStart=/usr/lib/securetunnel-gateway/SecureTunnel.GatewayAgent gateway serve 
 # sends) and SIGINT are both handled for graceful shutdown. Type=simple is correct here:
 # systemd only needs the process to keep running, not to signal readiness via sd_notify.
 
-# --- Identity: root by default (see docs/security-model.md "Least Privilege") ---
+# --- Identity: root by default ---
 # wg-quick, nft, and writing to /etc/wireguard all require root or an equivalent set
 # of Linux capabilities. This project has NOT verified that CAP_NET_ADMIN alone (without
 # full root) is sufficient for every code path (wg-quick internally shells out to `ip`,
@@ -60,7 +58,7 @@ RestartSec=5s
 TimeoutStartSec=30s
 TimeoutStopSec=15s
 
-# --- Logging: delegated to journald, not a custom file sink (see docs/operations-guide.md "Logging") ---
+# --- Logging: delegated to journald, not a custom file sink ---
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=securetunnel-gateway
