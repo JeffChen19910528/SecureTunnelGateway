@@ -63,7 +63,7 @@ securetunnel-gateway config apply --dry-run
 securetunnel-gateway config apply --yes
 ```
 
-`peer config --peer-id <id>` 會產生 Client 設定**範本**；私鑰由 Client 自行填入。
+`peer config --id <id> --output client.conf` 會產生 Client 設定**範本**；私鑰由 Client 自行填入。
 
 ## 4. 啟動
 
@@ -86,7 +86,7 @@ securetunnel-gateway doctor
 | 檢視防火牆 | `firewall status`、`firewall show` |
 | 檢視設定歷史 | `config list`、`config diff`、`config show` |
 | 比對實際狀態與記錄 | `config verify` |
-| 回滾 | `config rollback --yes` |
+| 回滾 | `config rollback --version <n> --yes` |
 | 備份 / 還原 | `gateway backup`、`gateway restore`（還原不會啟用資料，之後請執行 `config apply`） |
 
 各指令完整選項請用 `securetunnel-gateway <command> --help`。

@@ -63,7 +63,7 @@ securetunnel-gateway config apply --dry-run
 securetunnel-gateway config apply --yes
 ```
 
-`peer config --peer-id <id>` produces a client configuration **template**; the client fills in its own private key.
+`peer config --id <id> --output client.conf` produces a client configuration **template**; the client fills in its own private key.
 
 ## 4. Run
 
@@ -86,7 +86,7 @@ The service runs `gateway serve`, which periodically evaluates state and logs it
 | Inspect the firewall | `firewall status`, `firewall show` |
 | Review configuration history | `config list`, `config diff`, `config show` |
 | Check actual vs. recorded state | `config verify` |
-| Roll back | `config rollback --yes` |
+| Roll back | `config rollback --version <n> --yes` |
 | Back up / restore | `gateway backup`, `gateway restore` (restore never activates data; run `config apply` afterward) |
 
 Run `securetunnel-gateway <command> --help` for all options.
