@@ -2,20 +2,16 @@
 
 This directory holds an **executable, documented** integration test script for validating
 SecureTunnel Gateway against real `wireguard-tools`, `nftables`, and `systemd` on a real
-Ubuntu Server — the 15 real-environment checks ("Real Linux Integration
-Validation").
+Ubuntu Server — the 15 deployment checks below.
 
-## Status
-Executed on WSL2 Ubuntu 24.04 (kernel 6.6, built-in WireGuard, `wireguard-tools`, `nftables`,
-`tcpdump`, `curl`, `python3`): 20 PASS, 0 FAIL, 1 BLOCKED (check 15 needs the systemd unit
-installed). With `--with-packet-flow-test` checks 7-11 run over a real WireGuard tunnel between
-two network namespaces. Environment variables: `GATEWAY_BIN`, `LAB_ROOT` (default
-`/var/lib/securetunnel-lab`; must not be under `/tmp`, the Gateway rejects keys there), `IFACE`,
-`WG_PORT`, `LAN_IFACE`.
+## Running it
+Needs root, `wireguard-tools`, `nftables`, `iproute2`, `curl`, `python3` (and `tcpdump` for the NAT check) on an
+Ubuntu Server or WSL2 Ubuntu 24.04. Environment variables: `GATEWAY_BIN`, `LAB_ROOT` (default
+`/var/lib/securetunnel-lab`; must not be under `/tmp`, the Gateway rejects keys there), `IFACE`, `WG_PORT`, `LAN_IFACE`.
 
 ## What it covers
 
-| # | Spec item | Script section |
+| # | Check | Script section |
 |---|---|---|
 | 1 | WireGuard interface creation | `test_wireguard_interface_up` |
 | 2 | Gateway interface address | `test_wireguard_interface_up` |

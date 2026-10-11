@@ -4,7 +4,7 @@
 
 SecureTunnel Gateway 是 **SecureTunnel 私有資源存取控管平台** 的 Linux-based VPN Gateway / VPN Server。
 
-> **目前只涵蓋 VPN Server / Gateway 本身**：不包含 Windows Client、Linux Client、完整 Admin Portal 或完整後端 Control Plane。這些是未來的工作，本專案已在架構上為它們預留整合空間。
+> 本專案是 Gateway（伺服器）端。Windows 用戶端為 **SecureTunnel Connect**（[SecureTunnelClient](https://github.com/JeffChen19910528/SecureTunnelClient)）；也可使用任何標準 WireGuard 用戶端。
 
 ## 這個專案解決什麼問題
 
@@ -28,7 +28,7 @@ SecureTunnel Gateway 的目標很單純：
 | 名詞 | 說明 |
 |---|---|
 | **VPN Server / Gateway**（本專案） | 執行在 Linux 主機上的服務，負責建立 WireGuard VPN 網路、管理 Peer、透過 nftables 強制執行存取控制。 |
-| **VPN Client** | 使用者的裝置（Windows / Linux）上執行的 WireGuard client，用來連線到 Gateway。目前**不開發** SecureTunnel 自有 Client，使用標準 WireGuard client 即可。 |
+| **VPN Client** | 使用者的裝置（Windows / Linux）上執行的 WireGuard client，用來連線到 Gateway。可使用標準 WireGuard client，或內建 WireGuard 引擎的 Windows 用戶端 **SecureTunnel Connect**。 |
 | **Peer** | Gateway 對每一個已授權 VPN Client 的稱呼（在 WireGuard 概念中，Server 與每個 Client 互為 peer）。Peer 有自己的 VPN IP、公鑰與存取規則。 |
 | **受保護資源（Protected Resource）** | Gateway 管制存取的內部服務，例如網站、HTTP API、TCP 服務（如資料庫）。 |
 | **Control Plane（未來）** | 未來用來集中管理 Users / Groups / Devices / Gateways / Resources / Access Policies 的後端系統，目前不在範圍內。 |
@@ -107,7 +107,6 @@ $G peer config --id <peer-id> --output alice.conf $C                 # 範本；
 
 單元測試：`TMPDIR=<非 /tmp 的目錄> dotnet test SecureTunnelGateway.slnx`。在 Linux 上 `TMPDIR` 不能是 `/tmp`，因為測試會寫私鑰，而 Gateway 會拒絕 `/tmp`。
 
-**驗證結果**：整合實驗 20/20 通過（未安裝 systemd 單元時會略過重啟檢查）、單元測試全數通過，並已用 Windows 用戶端完成端到端連線（握手、授權資源 HTTP 200、未授權被擋、中斷後再被擋）。
 
 ## 快速開始（完整說明見 [GUIDE.zh-TW.md](GUIDE.zh-TW.md)）
 

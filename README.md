@@ -4,7 +4,7 @@
 
 SecureTunnel Gateway is the Linux-based VPN Gateway / VPN Server of the **SecureTunnel private resource access control platform**.
 
-> **Currently this project covers only the VPN Server / Gateway itself**: it does not include a Windows Client, Linux Client, full Admin Portal, or full backend Control Plane. These are future work, and the architecture already leaves room to integrate them.
+> This repository is the Gateway (server) side. The Windows client is **SecureTunnel Connect** ([SecureTunnelClient](https://github.com/JeffChen19910528/SecureTunnelClient)); any standard WireGuard client also works.
 
 ## What problem does it solve
 
@@ -107,7 +107,6 @@ Points that matter in practice:
 
 Unit tests: `TMPDIR=<dir other than /tmp> dotnet test SecureTunnelGateway.slnx`. On Linux `TMPDIR` must not be `/tmp`, because tests write private keys and the Gateway rejects `/tmp`.
 
-**Verified**: 20/20 lab checks passed (the systemd restart check is skipped unless the unit is installed), all unit tests pass, and a Windows client connected end to end (handshake, authorized HTTP 200, unauthorized blocked, blocked again after disconnect).
 
 ## Quick start (full details in [GUIDE.md](GUIDE.md))
 

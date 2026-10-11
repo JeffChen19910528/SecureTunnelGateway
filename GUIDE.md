@@ -95,8 +95,6 @@ Run `securetunnel-gateway <command> --help` for all options.
 
 `test-lab/run-integration-tests.sh` checks the real WireGuard interface, nftables default-deny, apply/rollback, the daemon, and service restart. Run it as root on an Ubuntu Server; add `--with-packet-flow-test` for the network-namespace test of authorized/unauthorized access and NAT. Every check reports `PASS`, `FAIL`, or `BLOCKED`. See [test-lab/README.md](test-lab/README.md).
 
-> This script has not yet been run on a real Ubuntu Server. Please run it in your environment before relying on the Gateway in production.
-
 ## 7. Uninstall
 
 ```bash

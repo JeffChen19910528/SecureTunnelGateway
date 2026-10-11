@@ -86,7 +86,7 @@ fi
 # ---------------------------------------------------------------------------
 KERNEL_VERSION="$(uname -r || echo unknown)"
 if [[ "$KERNEL_VERSION" == *"microsoft"* ]]; then
-  add_result "kernel.version" "WARN" "Kernel is '${KERNEL_VERSION}' (WSL2). This is a development/logic-validation environment, not a production Linux Server."
+  add_result "kernel.version" "WARN" "Kernel is '${KERNEL_VERSION}' (WSL2). Fine for testing; use a regular Linux server for production."
 else
   add_result "kernel.version" "PASS" "Kernel: ${KERNEL_VERSION}"
 fi

@@ -95,8 +95,6 @@ securetunnel-gateway doctor
 
 `test-lab/run-integration-tests.sh` 會檢查真實的 WireGuard 介面、nftables 預設拒絕、套用/回滾、daemon 與服務重啟。請在 Ubuntu Server 上以 root 執行；加上 `--with-packet-flow-test` 會以 network namespace 測試授權/未授權存取與 NAT。每項檢查結果為 `PASS`、`FAIL` 或 `BLOCKED`。詳見 [test-lab/README.md](test-lab/README.md)。
 
-> 此腳本尚未在真實 Ubuntu Server 上執行過。正式使用前，請先在你的環境中執行驗證。
-
 ## 7. 解除安裝
 
 ```bash
