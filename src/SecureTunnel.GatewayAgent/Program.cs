@@ -1,3 +1,4 @@
+using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -17,7 +18,13 @@ using SecureTunnel.GatewayAgent.WireGuard;
 
 var services = BuildServiceProvider();
 var root = RootCommandFactory.Build(services);
-var exitCode = await root.Parse(args).InvokeAsync();
+var exitCode = await root.Parse(args).InvokeAsync(new InvocationConfiguration
+{
+    // System.CommandLine's own SIGTERM/SIGINT handler races with the daemon's shutdown and throws
+    // ObjectDisposedException on a disposed CancellationTokenSource after a graceful stop.
+    // GatewayDaemonService registers SIGINT/SIGTERM itself, so the library handler is disabled.
+    ProcessTerminationTimeout = null,
+});
 Log.CloseAndFlush();
 return exitCode;
 

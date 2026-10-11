@@ -114,6 +114,13 @@ public sealed class FileOperationLockFactory : IOperationLockFactory
 
             return false;
         }
+        catch (IOException)
+        {
+            // The holder keeps the file open with FileShare.None, so reading it fails while the lock is
+            // genuinely held (on Linux via flock). That is NOT evidence of staleness - deleting it would
+            // steal a live lock. Fall back to the file's age, which the 10-minute rule still bounds.
+            return DateTimeOffset.UtcNow - File.GetLastWriteTimeUtc(lockPath) > StaleAfter;
+        }
         catch
         {
             return true; // couldn't even read it - treat as stale rather than blocking forever

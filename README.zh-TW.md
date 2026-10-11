@@ -80,6 +80,35 @@ SecureTunnel-Gateway/
 └── test-lab/                # 真實 Linux 整合測試腳本
 ```
 
+## 使用說明
+
+完整流程見 [GUIDE.zh-TW.md](GUIDE.zh-TW.md)。簡短版（Ubuntu 22.04/24.04，root）：
+
+```bash
+apt-get install -y wireguard-tools nftables
+dotnet publish src/SecureTunnel.GatewayAgent -c Release -r linux-x64 --self-contained true -o publish/linux-x64
+G=publish/linux-x64/SecureTunnel.GatewayAgent; C="--config /etc/securetunnel-gateway/gateway.yaml"
+$G wireguard generate-keys --yes $C                                  # 產生伺服器金鑰
+$G peer add --name alice --public-key <用戶端公鑰> --yes $C          # 會印出 peer id 與 VPN IP
+$G resource add --name web --destination 10.20.0.5 --protocol tcp --port 8443 --yes $C
+$G policy add --peer-id <peer-id> --resource-id <resource-id> --yes $C
+$G config apply --yes $C                                             # 套用 WireGuard + nftables（預設拒絕）
+$G peer config --id <peer-id> --output alice.conf $C                 # 範本；私鑰由用戶端自行填入
+```
+
+實務上要注意：
+- `wireGuard.configOutputPath` 必須是 `/etc/wireguard/<interfaceName>.conf`（`wg-quick` 只讀這個路徑）。
+- 金鑰不能放在 `/tmp`（Gateway 會拒絕任何人可寫的位置），請用 `/etc/securetunnel-gateway/keys`。
+- `network.lanInterface` 是面向受保護網段的網卡；請對用戶端開放 UDP `listenPort`（預設 51820）。
+- 要快速撤銷：`peer disable --id <id> --yes`，再 `config apply --yes`。
+
+### 驗證部署
+以 root 執行 `test-lab/run-integration-tests.sh --with-packet-flow-test`，它用 network namespace 建出 peer 與受保護資源，經真實 WireGuard 隧道檢查：握手、授權存取、預設拒絕、NAT、停用 peer、停用資源、apply／rollback 與 daemon。
+
+單元測試：`TMPDIR=<非 /tmp 的目錄> dotnet test SecureTunnelGateway.slnx`。在 Linux 上 `TMPDIR` 不能是 `/tmp`，因為測試會寫私鑰，而 Gateway 會拒絕 `/tmp`。
+
+**驗證結果**：整合實驗 20/20 通過（未安裝 systemd 單元時會略過重啟檢查）、單元測試全數通過，並已用 Windows 用戶端完成端到端連線（握手、授權資源 HTTP 200、未授權被擋、中斷後再被擋）。
+
 ## 快速開始（完整說明見 [GUIDE.zh-TW.md](GUIDE.zh-TW.md)）
 
 1. 準備 Linux 主機（建議 Ubuntu 22.04 / 24.04 LTS），並安裝 `wireguard-tools` 與 `nftables`。

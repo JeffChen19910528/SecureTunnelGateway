@@ -59,7 +59,8 @@ public sealed class GatewayDaemonService : IGatewayDaemonService
     public async Task<int> RunAsync(string configPath, DaemonRunOptions options, CancellationToken cancellationToken)
     {
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        using var sigterm = TryRegisterSigTerm(linkedCts);
+        using var sigterm = TryRegisterSignal(PosixSignal.SIGTERM, linkedCts);
+        using var sigint = TryRegisterSignal(PosixSignal.SIGINT, linkedCts);
 
         _logger.LogInformation(
             "SecureTunnel Gateway daemon starting (config={ConfigPath}, interval={IntervalSeconds}s, once={RunOnce})",
@@ -272,14 +273,14 @@ public sealed class GatewayDaemonService : IGatewayDaemonService
     /// (this project is developed on Windows/WSL2 - see docs/troubleshooting.md); a platform
     /// that cannot register it simply relies on SIGINT/the parent process token instead.
     /// </summary>
-    private static PosixSignalRegistration? TryRegisterSigTerm(CancellationTokenSource cts)
+    private static PosixSignalRegistration? TryRegisterSignal(PosixSignal signal, CancellationTokenSource cts)
     {
         try
         {
-            return PosixSignalRegistration.Create(PosixSignal.SIGTERM, context =>
+            return PosixSignalRegistration.Create(signal, context =>
             {
                 context.Cancel = true;
-                cts.Cancel();
+                try { cts.Cancel(); } catch (ObjectDisposedException) { }
             });
         }
         catch (PlatformNotSupportedException)

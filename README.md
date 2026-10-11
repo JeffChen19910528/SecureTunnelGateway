@@ -28,7 +28,7 @@ This is **not** a tool for traffic anonymization or evading network monitoring; 
 | Term | Description |
 |---|---|
 | **VPN Server / Gateway** (this project) | A service running on a Linux host that builds the WireGuard VPN network, manages Peers, and enforces access control through nftables. |
-| **VPN Client** | The WireGuard client on a user's device (Windows / Linux) used to connect to the Gateway. A dedicated SecureTunnel client is **not** developed yet; use a standard WireGuard client. |
+| **VPN Client** | The WireGuard client on a user's device (Windows / Linux) used to connect to the Gateway. Use any standard WireGuard client, or **SecureTunnel Connect** (the Windows client, separate repository), which bundles its own WireGuard engine. |
 | **Peer** | The Gateway's name for each authorized VPN Client (in WireGuard terms, the server and each client are peers of one another). A Peer has its own VPN IP, public key, and access rules. |
 | **Protected Resource** | An internal service whose access the Gateway controls, such as a website, HTTP API, or TCP service (e.g. a database). |
 | **Control Plane (future)** | A future backend for centrally managing Users / Groups / Devices / Gateways / Resources / Access Policies. Out of scope for now. |
@@ -79,6 +79,35 @@ SecureTunnel-Gateway/
 ├── tests/                   # Unit and integration tests
 └── test-lab/                # Real Linux integration test script
 ```
+
+## Usage
+
+Full walkthrough: [GUIDE.md](GUIDE.md). The short version, on an Ubuntu 22.04/24.04 host (root):
+
+```bash
+apt-get install -y wireguard-tools nftables
+dotnet publish src/SecureTunnel.GatewayAgent -c Release -r linux-x64 --self-contained true -o publish/linux-x64
+G=publish/linux-x64/SecureTunnel.GatewayAgent; C="--config /etc/securetunnel-gateway/gateway.yaml"
+$G wireguard generate-keys --yes $C                                  # server keys
+$G peer add --name alice --public-key <client-public-key> --yes $C   # prints the peer id and VPN IP
+$G resource add --name web --destination 10.20.0.5 --protocol tcp --port 8443 --yes $C
+$G policy add --peer-id <peer-id> --resource-id <resource-id> --yes $C
+$G config apply --yes $C                                             # WireGuard + nftables, default-deny
+$G peer config --id <peer-id> --output alice.conf $C                 # template; the client adds its private key
+```
+
+Points that matter in practice:
+- `wireGuard.configOutputPath` must be `/etc/wireguard/<interfaceName>.conf` (`wg-quick` only reads that path).
+- Keys must not live under `/tmp` (the Gateway refuses world-writable locations); use `/etc/securetunnel-gateway/keys`.
+- `network.lanInterface` is the interface that faces the protected networks; allow UDP `listenPort` (default 51820) from clients.
+- Revoke access quickly with `peer disable --id <id> --yes` followed by `config apply --yes`.
+
+### Verifying a deployment
+`test-lab/run-integration-tests.sh --with-packet-flow-test` (root) builds a peer and a protected resource out of network namespaces and checks, over a real WireGuard tunnel: handshake, authorized access, default-deny, NAT, disabled peer, disabled resource, apply/rollback and the daemon. Set `LAB_ROOT` if `/var/lib` is not suitable.
+
+Unit tests: `TMPDIR=<dir other than /tmp> dotnet test SecureTunnelGateway.slnx`. On Linux `TMPDIR` must not be `/tmp`, because tests write private keys and the Gateway rejects `/tmp`.
+
+**Verified**: 20/20 lab checks passed (the systemd restart check is skipped unless the unit is installed), all unit tests pass, and a Windows client connected end to end (handshake, authorized HTTP 200, unauthorized blocked, blocked again after disconnect).
 
 ## Quick start (full details in [GUIDE.md](GUIDE.md))
 

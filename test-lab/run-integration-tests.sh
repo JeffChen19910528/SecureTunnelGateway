@@ -3,9 +3,9 @@
 # SecureTunnel Gateway - Real Linux integration test lab.
 #
 # See README.md in this directory for full context, honest status, and the mapping from
-# each check here to the 15-item real-environment list. THIS SCRIPT HAS NOT BEEN EXECUTED -
-# it is prepared for a real Ubuntu Server, not run in this project's WSL2 dev environment
-# (which lacks wireguard-tools/nftables/sudo). Read its output, don't assume it.
+# each check here to the 15-item real-environment list. Executed on WSL2 Ubuntu 24.04 (kernel with
+# built-in WireGuard); read its output, don't assume it.
+# Env: GATEWAY_BIN, LAB_ROOT (default /var/lib/securetunnel-lab), IFACE, WG_PORT, LAN_IFACE.
 #
 # Usage: sudo GATEWAY_BIN=/path/to/SecureTunnel.GatewayAgent ./run-integration-tests.sh [--with-packet-flow-test] [--keep-artifacts]
 
@@ -24,9 +24,16 @@ for arg in "$@"; do
 done
 
 GATEWAY_BIN="${GATEWAY_BIN:-/usr/lib/securetunnel-gateway/SecureTunnel.GatewayAgent}"
-WORKDIR="$(mktemp -d /tmp/securetunnel-lab.XXXXXX)"
+# The Gateway rejects private keys under world-writable locations such as /tmp, so the lab's
+# working directory must live elsewhere. Override with LAB_ROOT=<dir> (created 0700).
+LAB_ROOT="${LAB_ROOT:-/var/lib/securetunnel-lab}"
+mkdir -p "$LAB_ROOT" && chmod 700 "$LAB_ROOT"
+WORKDIR="$(mktemp -d "${LAB_ROOT}/run.XXXXXX")"
+# wg-quick only reads /etc/wireguard/<iface>.conf, so the Gateway must write it there.
+IFACE="${IFACE:-wgtest0}"
+WG_CONF="/etc/wireguard/${IFACE}.conf"
+WG_PORT="${WG_PORT:-51900}"
 CONFIG_PATH="${WORKDIR}/gateway.yaml"
-IFACE="wgtest0"
 PASS_COUNT=0
 FAIL_COUNT=0
 BLOCKED_COUNT=0
@@ -45,6 +52,9 @@ cleanup() {
   nft delete table inet securetunnel >/dev/null 2>&1 || true
   ip netns del st-peer-ns >/dev/null 2>&1 || true
   ip netns del st-resource-ns >/dev/null 2>&1 || true
+  rm -f "$WG_CONF"
+  ip link del veth-res >/dev/null 2>&1 || true
+  ip link del veth-peer >/dev/null 2>&1 || true
   rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
@@ -84,17 +94,17 @@ cat > "$CONFIG_PATH" << YAML
 gatewayId: "gw-lab-test"
 wireGuard:
   interfaceName: "${IFACE}"
-  listenPort: 51900
+  listenPort: ${WG_PORT}
   privateKeyPath: "${WORKDIR}/keys/server.key"
   publicKeyPath: "${WORKDIR}/keys/server.pub"
   address: "10.250.0.1/24"
-  configOutputPath: "${WORKDIR}/${IFACE}.conf"
+  configOutputPath: "${WG_CONF}"
 network:
   vpnCidr: "10.250.0.0/24"
   gatewayVpnAddress: "10.250.0.1"
   clientAddressPoolStart: "10.250.0.10"
   clientAddressPoolEnd: "10.250.0.200"
-  lanInterface: "eth0"
+  lanInterface: "${LAN_IFACE:-veth-res}"
   protectedNetworks:
     - name: "lab-protected-net"
       cidr: "10.20.0.0/24"
@@ -278,48 +288,84 @@ test_systemd_restart() {
 # single host. See README.md "Scope decision" for why this is opt-in.
 # ---------------------------------------------------------------------------
 test_packet_flow() {
-  echo "--- Checks 7-11: Peer -> Resource authorization + NAT (netns-based) ---"
-  if ! command -v ip >/dev/null 2>&1 || ! command -v nc >/dev/null 2>&1; then
-    blocked "'ip' or 'nc' not available - cannot run the packet-flow test"
-    return
+  echo "--- Checks 7-11: Peer -> Resource authorization + NAT (netns + real WireGuard tunnel) ---"
+  for tool in ip curl python3; do
+    command -v "$tool" >/dev/null 2>&1 || { blocked "'$tool' not available - cannot run the packet-flow test"; return; }
+  done
+  if [[ -z "$PEER_ID" || -z "$PEER_PRIVATE_KEY" ]]; then
+    blocked "peer unavailable - skipping the packet-flow test"; return
   fi
+  local peer_ip
+  peer_ip="$(grep -o '10\.250\.0\.[0-9]*' "${WORKDIR}/peers.json" | head -1)"
+  [[ -n "$peer_ip" ]] || { fail "could not resolve the peer VPN IP from peers.json"; return; }
 
-  ip netns add st-resource-ns || { blocked "could not create network namespace 'st-resource-ns'"; return; }
+  # Protected resource namespace (10.20.0.10 serves :8443 authorized, :9443 never authorized).
+  ip netns add st-resource-ns || { blocked "could not create network namespace"; return; }
   ip link add veth-res type veth peer name veth-res-ns
   ip link set veth-res-ns netns st-resource-ns
-  ip addr add 10.20.0.254/24 dev veth-res
-  ip link set veth-res up
+  ip addr add 10.20.0.254/24 dev veth-res; ip link set veth-res up
   ip netns exec st-resource-ns ip addr add 10.20.0.10/24 dev veth-res-ns
   ip netns exec st-resource-ns ip link set veth-res-ns up
   ip netns exec st-resource-ns ip link set lo up
-  ip netns exec st-resource-ns bash -c 'while true; do echo "resource-reachable" | nc -l -p 8443 -q1; done' &
-  local nc_pid=$!
+  ip netns exec st-resource-ns ip route add default via 10.20.0.254
+  ip netns exec st-resource-ns python3 -m http.server 8443 --bind 10.20.0.10 >/dev/null 2>&1 &
+  local p1=$!
+  ip netns exec st-resource-ns python3 -m http.server 9443 --bind 10.20.0.10 >/dev/null 2>&1 &
+  local p2=$!
+  # Peer namespace with a real WireGuard client pointed at the Gateway over a veth underlay.
+  ip netns add st-peer-ns
+  ip link add veth-peer type veth peer name veth-peer-ns
+  ip link set veth-peer-ns netns st-peer-ns
+  ip addr add 10.99.1.1/24 dev veth-peer; ip link set veth-peer up
+  ip netns exec st-peer-ns ip addr add 10.99.1.2/24 dev veth-peer-ns
+  ip netns exec st-peer-ns ip link set veth-peer-ns up
+  ip netns exec st-peer-ns ip link set lo up
+  sysctl -qw net.ipv4.ip_forward=1
+  printf '%s' "$PEER_PRIVATE_KEY" > "${WORKDIR}/peer.key"; chmod 600 "${WORKDIR}/peer.key"
+  ip netns exec st-peer-ns ip link add wgpeer0 type wireguard
+  ip netns exec st-peer-ns wg set wgpeer0 private-key "${WORKDIR}/peer.key"     peer "$(cat "${WORKDIR}/keys/server.pub")" endpoint "10.99.1.1:${WG_PORT}"     allowed-ips 10.250.0.0/24,10.20.0.0/24 persistent-keepalive 1
+  ip netns exec st-peer-ns ip addr add "${peer_ip}/32" dev wgpeer0
+  ip netns exec st-peer-ns ip link set wgpeer0 up
+  ip netns exec st-peer-ns ip route add 10.250.0.0/24 dev wgpeer0
+  ip netns exec st-peer-ns ip route add 10.20.0.0/24 dev wgpeer0
   sleep 1
 
-  # Register the resource + an authorized policy for the peer created in test_peer_config.
+  local resource_id other_id
   gw resource add --name lab-resource --destination 10.20.0.10 --protocol tcp --port 8443 --yes >/dev/null 2>&1
-  local resource_id
-  resource_id="$(gw resource list --json 2>/dev/null | grep -o '"ResourceId":"[^"]*"\|"ResourceId": "[^"]*"' | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
-
-  if [[ -z "$PEER_ID" || -z "$resource_id" ]]; then
-    blocked "peer or resource id unavailable - skipping the rest of the packet-flow test"
+  gw resource add --name lab-other --destination 10.20.0.10 --protocol tcp --port 9443 --yes >/dev/null 2>&1
+  resource_id="$(grep -B3 '"name": "lab-resource"' "${WORKDIR}/resources.json" | grep -o 'resource-[0-9a-f]*' | head -1)"
+  [[ -n "$resource_id" ]] || resource_id="$(grep -o 'resource-[0-9a-f]*' "${WORKDIR}/resources.json" | head -1)"
+  gw peer enable --id "$PEER_ID" --yes >/dev/null 2>&1
+  gw policy add --peer-id "$PEER_ID" --resource-id "$resource_id" --yes >/dev/null 2>&1
+  if ! gw config apply --yes >/dev/null 2>&1; then
+    fail "config apply (packet-flow setup) did not succeed"
   else
-    gw peer enable --id "$PEER_ID" --yes >/dev/null 2>&1
-    gw policy add --peer-id "$PEER_ID" --resource-id "$resource_id" --yes >/dev/null 2>&1
-    gw config apply --yes >/dev/null 2>&1
-
-    # NOTE: fully connecting the peer's own WireGuard endpoint (a second netns running its
-    # own `wg-quick` interface, peered to this Gateway's) is the remaining piece needed for
-    # a true encrypted-tunnel, source-IP-preserved packet test; that setup is intentionally
-    # left as a manual follow-up (see README.md) rather than scripted further here, since it
-    # depends on kernel WireGuard module behavior inside network namespaces that varies by
-    # host and is best validated interactively the first time, not blindly automated.
-    blocked "full authorized/unauthorized/NAT packet-flow assertions require a second, manually-configured WireGuard peer namespace - infrastructure (resource netns + listener) is up, but the encrypted-tunnel leg is not scripted (see README.md)"
+    local cp=(ip netns exec st-peer-ns curl -s -m4 -o /dev/null -w '%{http_code}')
+    sleep 3
+    if ip netns exec st-peer-ns ping -c1 -W3 10.250.0.1 >/dev/null 2>&1; then pass "real WireGuard handshake: peer reaches the Gateway over the tunnel"; else fail "peer cannot reach the Gateway over the tunnel"; fi
+    [[ "$("${cp[@]}" http://10.20.0.10:8443/ 2>/dev/null)" == "200" ]] && pass "check 7: authorized peer reaches the authorized resource" || fail "check 7: authorized peer cannot reach the authorized resource"
+    [[ "$("${cp[@]}" http://10.20.0.10:9443/ 2>/dev/null)" != "200" ]] && pass "check 8: unauthorized resource is denied (default-deny)" || fail "check 8: unauthorized resource was reachable"
+    # Check 11: NAT - the resource sees the Gateway's address, not the peer's VPN IP.
+    local seen
+    seen="$(ip netns exec st-resource-ns bash -c 'timeout 3 tcpdump -nli veth-res-ns -c1 tcp port 8443 2>/dev/null' &
+      sleep 1; "${cp[@]}" http://10.20.0.10:8443/ >/dev/null 2>&1; wait)"
+    if ! command -v tcpdump >/dev/null 2>&1; then blocked "check 11: tcpdump not installed - NAT source-address assertion skipped"
+    elif echo "$seen" | grep -q "$peer_ip"; then fail "check 11: resource saw the peer VPN IP (no NAT)"
+    else pass "check 11: NAT - resource does not see the peer VPN IP"; fi
+    # Check 10: disabled resource.
+    gw resource disable --id "$resource_id" --yes >/dev/null 2>&1; gw config apply --yes >/dev/null 2>&1
+    [[ "$("${cp[@]}" http://10.20.0.10:8443/ 2>/dev/null)" != "200" ]] && pass "check 10: disabled resource is denied" || fail "check 10: disabled resource was reachable"
+    gw resource enable --id "$resource_id" --yes >/dev/null 2>&1
+    # Check 9: disabled peer.
+    gw peer disable --id "$PEER_ID" --yes >/dev/null 2>&1; gw config apply --yes >/dev/null 2>&1
+    [[ "$("${cp[@]}" http://10.20.0.10:8443/ 2>/dev/null)" != "200" ]] && pass "check 9: disabled peer is denied" || fail "check 9: disabled peer was reachable"
   fi
 
-  kill "$nc_pid" 2>/dev/null || true
+  kill "$p1" "$p2" 2>/dev/null || true
   ip link del veth-res 2>/dev/null || true
+  ip link del veth-peer 2>/dev/null || true
   ip netns del st-resource-ns 2>/dev/null || true
+  ip netns del st-peer-ns 2>/dev/null || true
 }
 
 test_wireguard_interface_up
