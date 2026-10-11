@@ -80,7 +80,7 @@ SecureTunnel-Gateway/
 └── test-lab/                # 真實 Linux 整合測試腳本
 ```
 
-## 快速開始
+## 快速開始（完整說明見 [GUIDE.zh-TW.md](GUIDE.zh-TW.md)）
 
 1. 準備 Linux 主機（建議 Ubuntu 22.04 / 24.04 LTS），並安裝 `wireguard-tools` 與 `nftables`。
 2. 複製 `config/gateway.example.yaml` 為 `/etc/securetunnel-gateway/gateway.yaml` 並填入實際值。
@@ -90,4 +90,4 @@ SecureTunnel-Gateway/
 
 ## 授權
 
-尚未決定授權條款，`LICENSE` 檔案將於確定授權方式後補上。
+本專案以 [MIT License](LICENSE) 授權。

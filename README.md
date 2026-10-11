@@ -80,7 +80,7 @@ SecureTunnel-Gateway/
 └── test-lab/                # Real Linux integration test script
 ```
 
-## Quick start
+## Quick start (full details in [GUIDE.md](GUIDE.md))
 
 1. Prepare a Linux host (Ubuntu 22.04 / 24.04 LTS recommended) with `wireguard-tools` and `nftables` installed.
 2. Copy `config/gateway.example.yaml` to `/etc/securetunnel-gateway/gateway.yaml` and fill in real values.
@@ -90,4 +90,4 @@ SecureTunnel-Gateway/
 
 ## License
 
-The license has not been decided yet; a `LICENSE` file will be added once it is.
+Released under the [MIT License](LICENSE).
